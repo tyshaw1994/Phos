@@ -86,9 +86,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Enumerations\LogLevel.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Controllers\PlexController.cs" />
+    <Compile Include="Logging\Logger.cs" />
+    <Compile Include="Managers\AniListManager.cs" />
+    <Compile Include="Managers\MyAnimeListManager.cs" />
+    <Compile Include="Managers\PlexManager.cs" />
+    <Compile Include="Models\LogEntry.cs" />
+    <Compile Include="Models\Show.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -102,8 +110,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Controllers\" />
-    <Folder Include="Models\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
