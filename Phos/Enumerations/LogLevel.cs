@@ -4,6 +4,7 @@ namespace Phos.Enumerations
     public enum LogLevel
     {
         Success,
-        Failure
+        Failure,
+        Info
     }
 }

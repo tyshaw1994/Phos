@@ -23,7 +23,7 @@ namespace Phos.Models
 
         public void Save()
         {
-            throw new NotImplementedException("Saving logs is not yet implemented.");
+            
         }
     }
 }
