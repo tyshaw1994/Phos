@@ -10,7 +10,7 @@ namespace Phos.Models
             
         }
 
-        public LogEntry(LogLevel level, string body, DateTimeOffset createdOn)
+        public LogEntry(LogLevel level, PlexRequest body, DateTimeOffset createdOn)
         {
             Level = level;
             Body = body;
@@ -18,7 +18,7 @@ namespace Phos.Models
         }
 
         public LogLevel Level { get; set; }
-        public string Body { get; set; }
+        public PlexRequest Body { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
 
         public void Save()
@@ -28,7 +28,7 @@ namespace Phos.Models
 
         public override string ToString()
         {
-            return $"LogLevel: {Level} | Body: {Body} | CreatedOn: {CreatedOn} | ";
+            return $"LogLevel: {Level} | Body: {Body.Metadata.Title} | CreatedOn: {CreatedOn} | ";
         }
     }
 }
