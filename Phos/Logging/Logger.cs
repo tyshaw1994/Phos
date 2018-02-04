@@ -26,8 +26,8 @@ namespace Phos.Logging
             Trace.Listeners.Add(textListener);
             Trace.AutoFlush = true;
 
-            var entry = new LogEntry(level, body, createdOn);
-            Trace.Write(entry);
+            //var entry = new LogEntry(level, body, createdOn);
+            Trace.Write(body);
 
             outputFile.Close();
             // TODO(Tyler): Store log entries in MongoDB by date

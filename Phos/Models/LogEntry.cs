@@ -28,7 +28,7 @@ namespace Phos.Models
 
         public override string ToString()
         {
-            return $"LogLevel: {Level} | Body: {Body.Metadata.Title} | CreatedOn: {CreatedOn} | ";
+            return $"LogLevel: {Level} | Body: {Body.Metadata.Title} | Episode: {Body.Metadata.Index} | CreatedOn: {CreatedOn} | ";
         }
     }
 }
