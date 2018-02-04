@@ -31,8 +31,13 @@ namespace Phos.Controllers
             }
 
             logger.CreateLogEntry(Enumerations.LogLevel.Info, request.ToString(), DateTimeOffset.UtcNow);
-            
-            return new HttpResponseMessage(HttpStatusCode.OK);
+
+            HttpResponseMessage response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Accepted
+            };
+
+            return response;
         }
 
         //[HttpGet]
