@@ -30,7 +30,7 @@ namespace Phos.Controllers
                 var malResponse = MyAnimeListManager.SearchForShow(request.Metadata.Title);
             }
 
-            logger.CreateLogEntry(Enumerations.LogLevel.Info, request.ToString(), DateTimeOffset.UtcNow);
+            logger.CreateLogEntry(Enumerations.LogLevel.Info, request, DateTimeOffset.UtcNow);
 
             HttpResponseMessage response = new HttpResponseMessage
             {

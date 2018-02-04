@@ -9,7 +9,7 @@ namespace Phos.Logging
 {
     public class Logger
     {
-        public void CreateLogEntry(LogLevel level, string body, DateTimeOffset createdOn)
+        public void CreateLogEntry(LogLevel level, PlexRequest body, DateTimeOffset createdOn)
         {
             string outputFileName = ConfigurationManager.AppSettings["TraceOutputFileName"];
             Stream outputFile = (File.Exists(outputFileName)) ? File.Open(outputFileName, FileMode.Append) : File.Create(outputFileName);
