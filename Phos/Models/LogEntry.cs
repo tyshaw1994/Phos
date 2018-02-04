@@ -25,5 +25,10 @@ namespace Phos.Models
         {
             
         }
+
+        public override string ToString()
+        {
+            return $"LogLevel: {Level} | Body: {Body} | CreatedOn: {CreatedOn} | ";
+        }
     }
 }
