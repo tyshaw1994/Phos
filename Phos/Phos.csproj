@@ -113,12 +113,14 @@
     <Compile Include="Models\AnimeType.cs" />
     <Compile Include="Models\LogEntry.cs" />
     <Compile Include="Models\PlexAccount.cs" />
+    <Compile Include="Models\PlexDirector.cs" />
     <Compile Include="Models\PlexEvent.cs" />
     <Compile Include="Models\PlexMetadata.cs" />
     <Compile Include="Models\PlexPlayer.cs" />
     <Compile Include="Models\PlexRequest.cs" />
     <Compile Include="Models\PlexServer.cs" />
     <Compile Include="Models\MalShow.cs" />
+    <Compile Include="Models\PlexWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

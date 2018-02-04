@@ -9,6 +9,11 @@ using Phos.Models;
 using Phos.Managers;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using Plex.Server.Webhooks;
+using Plex.Server.Webhooks.Converters;
+using Plex.Server.Webhooks.Events.Core;
+using Plex.Server.Webhooks.Events;
+using Plex.Server.Webhooks.Service;
 
 namespace Phos.Controllers
 {
@@ -17,20 +22,28 @@ namespace Phos.Controllers
         Logger logger = new Logger();
 
         [HttpPost]
-        public HttpResponseMessage PostWebhook([FromBody] PlexRequest request)
+        public async Task<HttpResponseMessage> PostWebhook()
         {
-            if(!ModelState.IsValid)
-            {
-                return new HttpResponseMessage(HttpStatusCode.BadRequest);
-            }
+            //if(!ModelState.IsValid)
+            //{
+            //    return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            //}
 
-            // TODO(Tyler): Figure out a way to utilize the other play events
-            if(request.Event.Equals("media.scrobble"))
-            {
-                var malResponse = MyAnimeListManager.SearchForShow(request.Metadata.Title);
-            }
+            //// TODO(Tyler): Figure out a way to utilize the other play events
+            //if(request.Event.Equals("media.scrobble"))
+            //{
+            //    var malResponse = MyAnimeListManager.SearchForShow(request.Metadata.Title);
+            //}
 
-            logger.CreateLogEntry(Enumerations.LogLevel.Info, request, DateTimeOffset.UtcNow);
+            //logger.CreateLogEntry(Enumerations.LogLevel.Info, request.ToString(), DateTimeOffset.UtcNow);
+            var content = await this.Request.Content.ReadAsStringAsync();
+
+            // try to parse the json out of the string
+            var json = PlexManager.ParseJsonFromWebhook(content);
+            logger.CreateLogEntry(Enumerations.LogLevel.Info, json, DateTimeOffset.UtcNow);
+
+            var testJson = JsonConvert.DeserializeObject<PlexRequest>(json);
+            logger.CreateLogEntry(Enumerations.LogLevel.Info, testJson.Metadata.Title, DateTimeOffset.UtcNow);
 
             HttpResponseMessage response = new HttpResponseMessage
             {
