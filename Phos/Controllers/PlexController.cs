@@ -19,31 +19,34 @@ namespace Phos.Controllers
 {
     public class PlexController : ApiController
     {
-        Logger logger = new Logger();
-
         [HttpPost]
         public async Task<HttpResponseMessage> PostWebhook()
         {
-            //if(!ModelState.IsValid)
-            //{
-            //    return new HttpResponseMessage(HttpStatusCode.BadRequest);
-            //}
+            if (!ModelState.IsValid)
+            {
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
 
-            //// TODO(Tyler): Figure out a way to utilize the other play events
-            //if(request.Event.Equals("media.scrobble"))
-            //{
-            //    var malResponse = MyAnimeListManager.SearchForShow(request.Metadata.Title);
-            //}
-
-            //logger.CreateLogEntry(Enumerations.LogLevel.Info, request.ToString(), DateTimeOffset.UtcNow);
             var content = await this.Request.Content.ReadAsStringAsync();
+            var plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(content));
 
-            // try to parse the json out of the string
-            var json = PlexManager.ParseJsonFromWebhook(content);
-            logger.CreateLogEntry(Enumerations.LogLevel.Info, json, DateTimeOffset.UtcNow);
+            // TODO(Tyler): Figure out a way to utilize the other play events
+            if (plexRequest.Event.Equals("media.scrobble"))
+            {
+                var show = await MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
 
-            var testJson = JsonConvert.DeserializeObject<PlexRequest>(json);
-            logger.CreateLogEntry(Enumerations.LogLevel.Info, testJson.Metadata.Title, DateTimeOffset.UtcNow);
+                if(!(show is JikanShow))
+                {
+                    Logger.CreateLogEntry(Enumerations.LogLevel.Failure, new ArgumentException("Show was not found through Jikan API search or some other error occured."), DateTime.Now);
+                }
+
+                var id = show.Id;
+                var episodeCompleted = plexRequest.Metadata.Index;
+            }
+
+
+
+            Logger.CreateLogEntry(Enumerations.LogLevel.Info, $"Title: {plexRequest.Metadata.GrandparentTitle} | Episode: {plexRequest.Metadata.Index}\n", DateTime.Now);
 
             HttpResponseMessage response = new HttpResponseMessage
             {

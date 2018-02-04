@@ -115,6 +115,8 @@
     <Compile Include="Managers\MyAnimeListManager.cs" />
     <Compile Include="Managers\PlexManager.cs" />
     <Compile Include="Models\AnimeType.cs" />
+    <Compile Include="Models\JikanResponse.cs" />
+    <Compile Include="Models\JikanShow.cs" />
     <Compile Include="Models\LogEntry.cs" />
     <Compile Include="Models\PlexAccount.cs" />
     <Compile Include="Models\PlexDirector.cs" />

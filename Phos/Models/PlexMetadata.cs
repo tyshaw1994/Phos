@@ -109,9 +109,9 @@ namespace Phos.Models
         public DateTime UpdatedAt { get; set; }
 
         [JsonProperty("Director")]
-        public PlexDirector Director { get; set; }
+        public PlexDirector[] Director { get; set; }
 
         [JsonProperty("Writer")]
-        public PlexWriter Writer { get; set; }
+        public PlexWriter[] Writer { get; set; }
     }
 }

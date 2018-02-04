@@ -1,41 +1,61 @@
 ﻿using System;
 using Phos.Models;
+using Phos.Logging;
+using Phos.Enumerations;
 using Newtonsoft.Json;
 using System.Configuration;
 using System.Xml;
+using System.Web;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Net;
+using System.Text;
+using System.Linq;
 
 namespace Phos.Managers
 {
     public static class MyAnimeListManager
     {
-        public static string SearchForShow(string title)
+        private static readonly string JikanApi = "https://api.jikan.me";
+
+        public static async Task<JikanShow> SearchForShow(string title)
         {
-            //    ICredentialContext creds = new CredentialContext
-            //    {
-            //        UserName = ConfigurationManager.AppSettings["MalUserName"],
-            //        Password = ConfigurationManager.AppSettings["MalPassword"]
-            //    };
+            string showPayload = string.Empty;
 
-            //var searchMethods = new SearchMethods(creds);
+            try
+            {
+                HttpWebRequest searchRequest = WebRequest.Create($"{JikanApi}/search/anime/{title.Replace(" ", "")}/1") as HttpWebRequest;
+                HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
 
-            //var searchResponse = searchMethods.SearchAnime(title);
-            
-            //if(string.IsNullOrEmpty(searchResponse))
-            //{
-            //    return "Show not found on MAL";
-            //}
+                using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
+                {
+                    showPayload = reader.ReadToEnd();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.CreateLogEntry(LogLevel.Failure, ex, DateTime.UtcNow);
+            }
 
-            //var doc = new XmlDocument();
-            //doc.LoadXml(searchResponse);
-            ////var responseJson = JsonConvert.SerializeXmlNode(doc);
+            var jikanResponse = JsonConvert.DeserializeObject<JikanResponse>(showPayload);
+            var malId = jikanResponse.Results[0].Id;
 
-            //foreach(XmlNode node in doc.SelectNodes("entry"))
-            //{
-            //    var responseJson = JsonConvert.SerializeXmlNode(node);
-            //    var show = JsonConvert.DeserializeObject<MalShow>(responseJson);
-            //}
+            try
+            {
+                HttpWebRequest searchRequest = WebRequest.Create($"{JikanApi}/anime/{malId}/stats") as HttpWebRequest;
+                HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
 
-            return "";
+                using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
+                {
+                    showPayload = reader.ReadToEnd();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.CreateLogEntry(LogLevel.Failure, ex, DateTime.UtcNow);
+            }
+
+            return jikanResponse.Results[0];
         }
     }
 }

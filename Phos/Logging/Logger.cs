@@ -7,9 +7,9 @@ using Phos.Models;
 
 namespace Phos.Logging
 {
-    public class Logger
+    public static class Logger
     {
-        public void CreateLogEntry(LogLevel level, PlexRequest body, DateTimeOffset createdOn)
+        public static void CreateLogEntry(LogLevel level, object body, DateTimeOffset createdOn)
         {
             string outputFileName = ConfigurationManager.AppSettings["TraceOutputFileName"];
             Stream outputFile = (File.Exists(outputFileName)) ? File.Open(outputFileName, FileMode.Append) : File.Create(outputFileName);
@@ -26,14 +26,14 @@ namespace Phos.Logging
             Trace.Listeners.Add(textListener);
             Trace.AutoFlush = true;
 
-            //var entry = new LogEntry(level, body, createdOn);
-            Trace.Write(body);
+            var entry = new LogEntry(level, body, createdOn);
+            Trace.Write(entry);
 
             outputFile.Close();
             // TODO(Tyler): Store log entries in MongoDB by date
         }
 
-        public void CreateLogEntry(LogLevel level, string body, DateTimeOffset createdOn)
+        public static void CreateLogEntry(LogLevel level, string body, DateTimeOffset createdOn)
         {
             string outputFileName = ConfigurationManager.AppSettings["TraceOutputFileName"];
             Stream outputFile = (File.Exists(outputFileName)) ? File.Open(outputFileName, FileMode.Append) : File.Create(outputFileName);
@@ -57,7 +57,7 @@ namespace Phos.Logging
             // TODO(Tyler): Store log entries in MongoDB by date
         }
 
-        public void GetLogEntry()
+        public static void GetLogEntry()
         {
             // TODO(Tyler): Implement some way of getting log entries back by ID
         }

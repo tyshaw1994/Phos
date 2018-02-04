@@ -8,7 +8,7 @@ namespace Phos.Models
         public int Id { get; set; }
 
         [JsonProperty("filter")]
-        public string FIlter { get; set; }
+        public string Filter { get; set; }
 
         [JsonProperty("tag")]
         public string Tag { get; set; }
