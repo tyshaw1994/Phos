@@ -29,6 +29,7 @@ namespace Phos.Controllers
 
             var content = await this.Request.Content.ReadAsStringAsync();
             var plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(content));
+            Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
 
             // TODO(Tyler): Figure out a way to utilize the other play events
             if (plexRequest.Event.Equals("media.scrobble"))
@@ -37,16 +38,14 @@ namespace Phos.Controllers
 
                 if(!(show is JikanShow))
                 {
-                    Logger.CreateLogEntry(Enumerations.LogLevel.Failure, new ArgumentException("Show was not found through Jikan API search or some other error occured."), DateTime.Now);
+                    Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through Jikan API search or some other error occured."), DateTime.Now);
                 }
 
                 var id = show.Id;
                 var episodeCompleted = plexRequest.Metadata.Index;
+
+                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {show}", DateTime.Now);
             }
-
-
-
-            Logger.CreateLogEntry(Enumerations.LogLevel.Info, $"Title: {plexRequest.Metadata.GrandparentTitle} | Episode: {plexRequest.Metadata.Index}\n", DateTime.Now);
 
             HttpResponseMessage response = new HttpResponseMessage
             {

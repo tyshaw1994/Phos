@@ -34,7 +34,7 @@ namespace Phos.Managers
             }
             catch (Exception ex)
             {
-                Logger.CreateLogEntry(LogLevel.Failure, ex, DateTime.UtcNow);
+                Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
             }
 
             var jikanResponse = JsonConvert.DeserializeObject<JikanResponse>(showPayload);
@@ -52,7 +52,7 @@ namespace Phos.Managers
             }
             catch (Exception ex)
             {
-                Logger.CreateLogEntry(LogLevel.Failure, ex, DateTime.UtcNow);
+                Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
             }
 
             return jikanResponse.Results[0];

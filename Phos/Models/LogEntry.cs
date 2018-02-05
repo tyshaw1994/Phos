@@ -10,14 +10,14 @@ namespace Phos.Models
             
         }
 
-        public LogEntry(LogLevel level, object body, DateTimeOffset createdOn)
+        public LogEntry(LogType level, object body, DateTimeOffset createdOn)
         {
             Level = level;
             Body = body;
             CreatedOn = createdOn;
         }
 
-        public LogLevel Level { get; set; }
+        public LogType Level { get; set; }
         public object Body { get; set; }
         public DateTimeOffset CreatedOn { get; set; }
 

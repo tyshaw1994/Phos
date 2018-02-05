@@ -9,9 +9,9 @@ namespace Phos.Logging
 {
     public static class Logger
     {
-        public static void CreateLogEntry(LogLevel level, object body, DateTimeOffset createdOn)
+        public static void CreateLogEntry(LogType level, object body, DateTimeOffset createdOn)
         {
-            string outputFileName = ConfigurationManager.AppSettings["TraceOutputFileName"];
+            string outputFileName = $"{ConfigurationManager.AppSettings["RootDirectory"]}{level}{ConfigurationManager.AppSettings["TraceOutputFileName"]}";
             Stream outputFile = (File.Exists(outputFileName)) ? File.Open(outputFileName, FileMode.Append) : File.Create(outputFileName);
 
             // Make sure the log file doesn't get crazy big
@@ -33,9 +33,9 @@ namespace Phos.Logging
             // TODO(Tyler): Store log entries in MongoDB by date
         }
 
-        public static void CreateLogEntry(LogLevel level, string body, DateTimeOffset createdOn)
+        public static void CreateLogEntry(LogType level, string body, DateTimeOffset createdOn)
         {
-            string outputFileName = ConfigurationManager.AppSettings["TraceOutputFileName"];
+            string outputFileName = $"{ConfigurationManager.AppSettings["RootDirectory"]}{level}{ConfigurationManager.AppSettings["TraceOutputFileName"]}";
             Stream outputFile = (File.Exists(outputFileName)) ? File.Open(outputFileName, FileMode.Append) : File.Create(outputFileName);
 
             // Make sure the log file doesn't get crazy big
@@ -51,7 +51,7 @@ namespace Phos.Logging
             Trace.AutoFlush = true;
 
             //var entry = new LogEntry(level, body, createdOn);
-            Trace.Write(body);
+            Trace.WriteLine($"{body} @ {createdOn.ToString("MM-dd-yyyy hh:mm:sstt")}");
 
             outputFile.Close();
             // TODO(Tyler): Store log entries in MongoDB by date

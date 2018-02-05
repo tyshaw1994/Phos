@@ -105,7 +105,7 @@
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Converters\EpochToDateTimeConverter.cs" />
-    <Compile Include="Enumerations\LogLevel.cs" />
+    <Compile Include="Enumerations\LogType.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
