@@ -28,10 +28,20 @@ namespace Phos.Controllers
             }
 
             var content = await this.Request.Content.ReadAsStringAsync();
-            var plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(content));
+            PlexRequest plexRequest = new PlexRequest();
+            try
+            {
+                plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(content));
+            }
+            catch (JsonSerializationException jse)
+            {
+                Logger.CreateLogEntry(Enumerations.LogType.Error, jse, DateTime.Now);
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+
             Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
 
-            // TODO(Tyler): Figure out a way to utilize the other play events
+            // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
             {
                 var show = await MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
