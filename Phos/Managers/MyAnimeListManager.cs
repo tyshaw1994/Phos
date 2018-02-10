@@ -25,7 +25,7 @@ namespace Phos.Managers
             try
             {
                 HttpWebRequest searchRequest = WebRequest.Create($"{JikanApi}/search/anime/{title.Replace(" ", "")}/1") as HttpWebRequest;
-                HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
+                var searchResponse = await searchRequest.GetResponseAsync();
 
                 using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
                 {
@@ -54,6 +54,8 @@ namespace Phos.Managers
             {
                 Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
             }
+
+            Logger.CreateLogEntry(LogType.Info, jikanResponse, DateTime.Now);
 
             return jikanResponse.Results[0];
         }

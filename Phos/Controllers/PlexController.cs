@@ -39,7 +39,7 @@ namespace Phos.Controllers
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
 
-            Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
+            Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) from {plexRequest.Account.Title} for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
 
             // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
@@ -54,7 +54,7 @@ namespace Phos.Controllers
                 var id = show.Id;
                 var episodeCompleted = plexRequest.Metadata.Index;
 
-                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {show}", DateTime.Now);
+                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {show.Title}", DateTime.Now);
             }
 
             HttpResponseMessage response = new HttpResponseMessage
