@@ -41,7 +41,8 @@ namespace Phos.Managers
             }
 
             var jikanResponse = JsonConvert.DeserializeObject<JikanResponse>(showPayload);
-            var malId = jikanResponse.Results[0].Id;
+            var jikanShow = jikanResponse.Results[0];
+            var malId = jikanShow.Id;
 
             try
             {
@@ -58,7 +59,7 @@ namespace Phos.Managers
                 Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
             }
 
-            Logger.CreateLogEntry(LogType.Info, jikanResponse, DateTime.Now);
+            Logger.CreateLogEntry(LogType.Success, $"Jikan search was successful for {title}. ID: {malId} | Total Episodes: {jikanShow.Episodes}", DateTime.Now);
 
             return jikanResponse.Results[0];
         }
