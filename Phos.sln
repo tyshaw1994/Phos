@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Phos", "Phos\Phos.csproj", "{95607101-0B24-42BB-AC2D-151EB3C5F556}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhosTest", "PhosTest\PhosTest.csproj", "{15302D61-6445-40DF-B4C0-6558BD256AE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{95607101-0B24-42BB-AC2D-151EB3C5F556}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95607101-0B24-42BB-AC2D-151EB3C5F556}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95607101-0B24-42BB-AC2D-151EB3C5F556}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15302D61-6445-40DF-B4C0-6558BD256AE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15302D61-6445-40DF-B4C0-6558BD256AE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15302D61-6445-40DF-B4C0-6558BD256AE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15302D61-6445-40DF-B4C0-6558BD256AE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

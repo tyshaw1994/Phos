@@ -7,6 +7,7 @@ namespace Phos.Enumerations
         Error,
         Info,
         PlayPause,
-        Scrobble
+        Scrobble,
+        TestError
     }
 }

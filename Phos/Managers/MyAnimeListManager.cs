@@ -17,6 +17,8 @@ namespace Phos.Managers
     public static class MyAnimeListManager
     {
         private static readonly string JikanApi = "https://api.jikan.me";
+        private static readonly string MalApiBaseUrl = "https://myanimelist.net/api/anime/";
+        private static readonly string MalAuthUrl = "https://myanimelist.net/api/account/verify_credentials.xml";
 
         public static async Task<JikanShow> SearchForShow(string title)
         {
@@ -24,8 +26,9 @@ namespace Phos.Managers
 
             try
             {
+                //TODO (Tyler): Figure out why this isn't working anymore
                 HttpWebRequest searchRequest = WebRequest.Create($"{JikanApi}/search/anime/{title.Replace(" ", "")}/1") as HttpWebRequest;
-                var searchResponse = await searchRequest.GetResponseAsync();
+                HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
 
                 using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
                 {
@@ -58,6 +61,14 @@ namespace Phos.Managers
             Logger.CreateLogEntry(LogType.Info, jikanResponse, DateTime.Now);
 
             return jikanResponse.Results[0];
+        }
+
+        public static async Task<bool> UpdateList(int malId, int episode)
+        {
+            HttpWebRequest searchRequest = WebRequest.Create(MalAuthUrl) as HttpWebRequest;
+            var searchResponse = await searchRequest.GetResponseAsync();
+
+            return false;
         }
     }
 }

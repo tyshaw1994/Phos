@@ -20,41 +20,45 @@ namespace Phos.Controllers
     public class PlexController : ApiController
     {
         [HttpPost]
-        public async Task<HttpResponseMessage> PostWebhook()
+        public async Task<HttpResponseMessage> PostWebhook(PlexRequest plexRequest = null)
         {
             if (!ModelState.IsValid)
             {
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
 
-            var content = await this.Request.Content.ReadAsStringAsync();
-            PlexRequest plexRequest = new PlexRequest();
-            try
+            if (plexRequest == null)
             {
-                plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(content));
-            }
-            catch (JsonSerializationException jse)
-            {
-                Logger.CreateLogEntry(Enumerations.LogType.Error, jse, DateTime.Now);
-                return new HttpResponseMessage(HttpStatusCode.BadRequest);
-            }
+                var content = await this.Request.Content.ReadAsStringAsync();
+                plexRequest = new PlexRequest();
+                try
+                {
+                    plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(content));
+                }
+                catch (JsonSerializationException jse)
+                {
+                    Logger.CreateLogEntry(Enumerations.LogType.Error, jse, DateTime.Now);
+                    return new HttpResponseMessage(HttpStatusCode.BadRequest);
+                }
 
-            Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) from {plexRequest.Account.Title} for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
+                Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) from {plexRequest.Account.Title} for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
+            }
 
             // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
             {
-                var show = await MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
+                // Disabling until this is fixed
+                //var show = await MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
 
-                if(!(show is JikanShow))
-                {
-                    Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through Jikan API search or some other error occured."), DateTime.Now);
-                }
+                //if(!(show is JikanShow))
+                //{
+                //    Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through Jikan API search or some other error occured."), DateTime.Now);
+                //}
 
-                var id = show.Id;
+                //var id = show.Id;
                 var episodeCompleted = plexRequest.Metadata.Index;
 
-                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {show.Title}", DateTime.Now);
+                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
             }
 
             HttpResponseMessage response = new HttpResponseMessage
