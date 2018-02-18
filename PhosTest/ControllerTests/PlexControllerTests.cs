@@ -19,18 +19,7 @@ namespace PhosTest.ControllerTests
         [TestMethod]
         public void TestMalAuth()
         {
-            try
-            {
-                PlexRequest plexRequest = JsonConvert.DeserializeObject<PlexRequest>(PlexManager.ParseJsonFromWebhook(GetSamplePayload()));
-                
-                PlexController plexController = new PlexController();
-                var response = plexController.PostWebhook(plexRequest);
-            }
-            catch (Exception ex)
-            {
-                Logger.CreateLogEntry(Phos.Enumerations.LogType.TestError, ex, DateTime.Now);
-                throw;
-            }
+
         }
 
 

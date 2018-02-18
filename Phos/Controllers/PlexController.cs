@@ -26,7 +26,6 @@ namespace Phos.Controllers
             {
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
-
             
             var content = await this.Request.Content.ReadAsStringAsync();
             PlexRequest plexRequest = new PlexRequest();
@@ -45,7 +44,6 @@ namespace Phos.Controllers
             // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
             {
-                // Disabling until this is fixed
                 var show = await MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
 
                 if (!(show is JikanShow))
@@ -55,6 +53,18 @@ namespace Phos.Controllers
 
                 var id = show.Id;
                 var episodeCompleted = plexRequest.Metadata.Index;
+                var isFinished = (episodeCompleted == show.Episodes) ? true : false;
+
+                // If I ever want to release this to the public, I will need some kind of lookup from a storage for MAL creds/emails, but for now I'll use my own
+                if (plexRequest.Account.Title == "shaw.tyler94@gmail.com")
+                {
+                    var updated = MyAnimeListManager.UpdateList(id, episodeCompleted, isFinished);
+
+                    if (!updated)
+                    {
+                        Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to update list with show.", DateTime.Now);
+                    }
+                }
 
                 Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
             }

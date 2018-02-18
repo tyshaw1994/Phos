@@ -106,6 +106,7 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Converters\EpochToDateTimeConverter.cs" />
     <Compile Include="Enumerations\LogType.cs" />
+    <Compile Include="Enumerations\MalStatus.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -118,6 +119,7 @@
     <Compile Include="Models\JikanResponse.cs" />
     <Compile Include="Models\JikanShow.cs" />
     <Compile Include="Models\LogEntry.cs" />
+    <Compile Include="Models\MalAnimeValues.cs" />
     <Compile Include="Models\PlexAccount.cs" />
     <Compile Include="Models\PlexDirector.cs" />
     <Compile Include="Models\PlexEvent.cs" />
