@@ -44,9 +44,9 @@ namespace Phos.Controllers
             // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
             {
-                var show = await MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
+                var show = MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
 
-                if (!(show is JikanShow))
+                if (!(show is MalShow))
                 {
                     Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through Jikan API search or some other error occured."), DateTime.Now);
                 }

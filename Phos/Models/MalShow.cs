@@ -23,6 +23,9 @@ namespace Phos.Models
         [JsonProperty("type")]
         public AnimeType Type { get; set; }
 
+        [JsonProperty("score")]
+        public float Score { get; set; }
+
         [JsonProperty("status")]
         public string Status { get; set; }
 
@@ -37,5 +40,11 @@ namespace Phos.Models
 
         [JsonProperty("image")]
         public string ImageUrl { get; set; }
+    }
+
+    public class Entry
+    {
+        [JsonProperty("entry")]
+        public MalShow Show { get; set; }
     }
 }

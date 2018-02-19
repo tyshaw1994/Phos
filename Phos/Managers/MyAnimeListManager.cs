@@ -17,22 +17,35 @@ namespace Phos.Managers
 {
     public static class MyAnimeListManager
     {
-        private static readonly string JikanApi = "https://api.jikan.me";
+        //private static readonly string JikanApi = "https://api.jikan.me";
         private static readonly string MalApiBaseUrl = "https://myanimelist.net/api/animelist";
+        private static readonly string MalApiSearchBaseUrl = $"https://myanimelist.net/api/anime/search.xml?q=";
         private static readonly string MalAuthUrl = "https://myanimelist.net/api/account/verify_credentials.xml";
 
-        public static async Task<JikanShow> SearchForShow(string title)
+        public static MalShow SearchForShow(string title)
         {
             string showPayload = string.Empty;
+            string username = ConfigurationManager.AppSettings["MalUserName"];
+            string password = ConfigurationManager.AppSettings["MalPassword"];
+
+            if (!ValidateMalCredentials(username, password))
+            {
+                Logger.CreateLogEntry(LogType.Error, "Failed to verify MAL credentials.", DateTime.UtcNow);
+            }
 
             try
             {
-                //TODO (Tyler): Figure out why this isn't working anymore
-                HttpWebRequest searchRequest = WebRequest.Create($"{JikanApi}/search/anime/{title.Replace(" ", "")}/1") as HttpWebRequest;
+                HttpWebRequest searchRequest = WebRequest.Create($"{MalApiSearchBaseUrl}{title.Replace(" ", "_")}") as HttpWebRequest;
+                searchRequest.Method = "GET";
+                searchRequest.Headers["Authorization"] = "Basic " +
+                    Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+                searchRequest.ContentType = "application/x-www-form-urlencoded";
+
                 HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
 
                 using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
                 {
+                    // this is XML
                     showPayload = reader.ReadToEnd();
                 }
             }
@@ -41,28 +54,16 @@ namespace Phos.Managers
                 Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
             }
 
-            var jikanResponse = JsonConvert.DeserializeObject<JikanResponse>(showPayload);
-            var jikanShow = jikanResponse.Results[0];
-            var malId = jikanShow.Id;
+            // Currently I assume that the first response is the correct one, but this might not always be true
+            XmlDocument responseAsXml = new XmlDocument();
+            responseAsXml.LoadXml(showPayload);
+            string responseAsJson = JsonConvert.SerializeXmlNode(responseAsXml.GetElementsByTagName("entry")[0]);
+            Entry malEntry = JsonConvert.DeserializeObject<Entry>(responseAsJson);
+            MalShow malShow = malEntry.Show;
+            
+            Logger.CreateLogEntry(LogType.Success, $"MAL API search was successful for {title}. ID: {malShow.Id} | Total Episodes: {malShow.Episodes}", DateTime.Now);
 
-            try
-            {
-                HttpWebRequest searchRequest = WebRequest.Create($"{JikanApi}/anime/{malId}/stats") as HttpWebRequest;
-                HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
-
-                using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
-                {
-                    showPayload = reader.ReadToEnd();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
-            }
-
-            Logger.CreateLogEntry(LogType.Success, $"Jikan search was successful for {title}. ID: {malId} | Total Episodes: {jikanShow.Episodes}", DateTime.Now);
-
-            return jikanResponse.Results[0];
+            return malShow;
         }
 
         public static bool UpdateList(int malId, int episode, bool isFinished = false)
@@ -137,5 +138,7 @@ namespace Phos.Managers
                 return false;
             }
         }
+
+       
     }
 }
