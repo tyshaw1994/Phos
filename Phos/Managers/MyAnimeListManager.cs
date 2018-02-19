@@ -12,6 +12,7 @@ using System.Net;
 using System.Text;
 using System.Linq;
 using System.IO;
+using Phos.Converters;
 
 namespace Phos.Managers
 {
@@ -20,63 +21,46 @@ namespace Phos.Managers
         private static readonly string MalApiBaseUrl = "https://myanimelist.net/api/animelist";
         private static readonly string MalApiSearchBaseUrl = $"https://myanimelist.net/api/anime/search.xml?q=";
         private static readonly string MalAuthUrl = "https://myanimelist.net/api/account/verify_credentials.xml";
+        private static readonly string MalListUrl = "https://myanimelist.net/malappinfo.php?u={0}&status=all&type=anime";
 
-        public static MalShow SearchForShow(string title)
+        public static Anime SearchListForShow(string title)
         {
-            // TODO(Tyler): Use this: https://myanimelist.net/malappinfo.php?u=SoraX64&status=all&type=anime and filter by status = 1
-            // then do a comparison by title to find the right show to update
+            var username = ConfigurationManager.AppSettings["MalUserName"];
 
-            string showPayload = string.Empty;
-            string username = ConfigurationManager.AppSettings["MalUserName"];
-            string password = ConfigurationManager.AppSettings["MalPassword"];
+            var searchRequest = WebRequest.Create(string.Format(MalListUrl, username)) as HttpWebRequest;
+            searchRequest.Method = "GET";
 
-            if (!ValidateMalCredentials(username, password))
+            var searchResponse = (HttpWebResponse)searchRequest.GetResponse();
+
+            string animeList = string.Empty;
+            using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
             {
-                Logger.CreateLogEntry(LogType.Error, "Failed to verify MAL credentials.", DateTime.UtcNow);
+                // this is XML
+                animeList = reader.ReadToEnd();
             }
 
-            try
-            {
-                HttpWebRequest searchRequest = WebRequest.Create($"{MalApiSearchBaseUrl}{title.Replace(" ", "+")}") as HttpWebRequest;
-                searchRequest.Method = "GET";
-                searchRequest.Headers["Authorization"] = "Basic " +
-                    Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-                searchRequest.ContentType = "application/x-www-form-urlencoded";
+            var responseAsXml = new XmlDocument();
+            responseAsXml.LoadXml(animeList);
+            var responseAsJson = JsonConvert.SerializeXmlNode(responseAsXml.GetElementsByTagName("myanimelist")[0]);
+            var malList = JsonConvert.DeserializeObject<MyAnimeList>(responseAsJson);
 
-                HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
+            var currentlyWatching = from show in malList.AnimeList.AllAnime
+                                    where show.MyStatus == MalStatus.Watching
+                                    select show;
 
-                using (var reader = new System.IO.StreamReader(searchResponse.GetResponseStream(), ASCIIEncoding.ASCII))
-                {
-                    // this is XML
-                    showPayload = reader.ReadToEnd();
-                }
+            var currentShow = (from show in currentlyWatching
+                              where TitleComparer.Compute(show.Title, title) < 5
+                              select show).First();
 
-                if(string.IsNullOrEmpty(showPayload))
-                {
-                    Logger.CreateLogEntry(LogType.Error, $"MAL search was not successful for show: {title}", DateTime.Now);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.CreateLogEntry(LogType.Error, ex, DateTime.UtcNow);
-            }
-
-            // Currently I assume that the first response is the correct one, but this might not always be true
-            XmlDocument responseAsXml = new XmlDocument();
-            responseAsXml.LoadXml(showPayload);
-            string responseAsJson = JsonConvert.SerializeXmlNode(responseAsXml.GetElementsByTagName("entry")[0]);
-            Entry malEntry = JsonConvert.DeserializeObject<Entry>(responseAsJson);
-            MalShow malShow = malEntry.Show;
-
-            if(string.IsNullOrEmpty(malShow.Title))
+            if(string.IsNullOrEmpty(currentShow.Title))
             {
                 Logger.CreateLogEntry(LogType.Error, "MAL Search was not successful.", DateTime.Now);
                 throw new Exception("MAL show was not found successfully.");
             }
             
-            Logger.CreateLogEntry(LogType.Success, $"MAL API search was successful for {title}. ID: {malShow.Id} | Total Episodes: {malShow.Episodes}", DateTime.Now);
+            Logger.CreateLogEntry(LogType.Success, $"MAL API search was successful for {title}. ID: {currentShow.Id} | Total Episodes: {currentShow.Episodes}", DateTime.Now);
 
-            return malShow;
+            return currentShow;
         }
 
         public static bool UpdateList(int malId, int episode, bool isFinished = false)

@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Phos.Enumerations;
 
 namespace Phos.Models
 {

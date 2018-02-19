@@ -44,17 +44,9 @@ namespace Phos.Controllers
             // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
             {
-                MalShow show;
-                if (plexRequest.Metadata.ParentTitle.Contains("Season") && !plexRequest.Metadata.ParentTitle.Contains("1"))
-                {
-                    show = MyAnimeListManager.SearchForShow($"{plexRequest.Metadata.GrandparentTitle} {plexRequest.Metadata.ParentTitle}");
-                }
-                else
-                {
-                    show = MyAnimeListManager.SearchForShow(plexRequest.Metadata.GrandparentTitle);
-                }
-
-                if (!(show is MalShow) || string.IsNullOrEmpty(show.Title))
+                Anime show = MyAnimeListManager.SearchListForShow(plexRequest.Metadata.GrandparentTitle);
+                
+                if (!(show is Anime) || string.IsNullOrEmpty(show.Title))
                 {
                     Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through MAL API search or some other error occured."), DateTime.Now);
                 }
@@ -63,17 +55,16 @@ namespace Phos.Controllers
                 var episodeCompleted = plexRequest.Metadata.Index;
                 var isFinished = (episodeCompleted == show.Episodes) ? true : false;
 
-                // DISABLING FOR NOW UNTIL FIXED
-                //// If I ever want to release this to the public, I will need some kind of lookup from a storage for MAL creds/emails, but for now I'll use my own
-                //if (plexRequest.Account.Title == "shaw.tyler94@gmail.com")
-                //{
-                //    var updated = MyAnimeListManager.UpdateList(id, episodeCompleted, isFinished);
+                // If I ever want to release this to the public, I will need some kind of lookup from a storage for MAL creds/emails, but for now I'll use my own
+                if (plexRequest.Account.Title == "shaw.tyler94@gmail.com")
+                {
+                    var updated = MyAnimeListManager.UpdateList(id, episodeCompleted, isFinished);
 
-                //    if (!updated)
-                //    {
-                //        Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to update list with show.", DateTime.Now);
-                //    }
-                //}
+                    if (!updated)
+                    {
+                        Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to update list with show.", DateTime.Now);
+                    }
+                }
 
                 Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
             }
