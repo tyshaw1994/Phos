@@ -17,13 +17,15 @@ namespace Phos.Managers
 {
     public static class MyAnimeListManager
     {
-        //private static readonly string JikanApi = "https://api.jikan.me";
         private static readonly string MalApiBaseUrl = "https://myanimelist.net/api/animelist";
         private static readonly string MalApiSearchBaseUrl = $"https://myanimelist.net/api/anime/search.xml?q=";
         private static readonly string MalAuthUrl = "https://myanimelist.net/api/account/verify_credentials.xml";
 
         public static MalShow SearchForShow(string title)
         {
+            // TODO(Tyler): Use this: https://myanimelist.net/malappinfo.php?u=SoraX64&status=all&type=anime and filter by status = 1
+            // then do a comparison by title to find the right show to update
+
             string showPayload = string.Empty;
             string username = ConfigurationManager.AppSettings["MalUserName"];
             string password = ConfigurationManager.AppSettings["MalPassword"];
@@ -35,7 +37,7 @@ namespace Phos.Managers
 
             try
             {
-                HttpWebRequest searchRequest = WebRequest.Create($"{MalApiSearchBaseUrl}{title.Replace(" ", "_")}") as HttpWebRequest;
+                HttpWebRequest searchRequest = WebRequest.Create($"{MalApiSearchBaseUrl}{title.Replace(" ", "+")}") as HttpWebRequest;
                 searchRequest.Method = "GET";
                 searchRequest.Headers["Authorization"] = "Basic " +
                     Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
@@ -47,6 +49,11 @@ namespace Phos.Managers
                 {
                     // this is XML
                     showPayload = reader.ReadToEnd();
+                }
+
+                if(string.IsNullOrEmpty(showPayload))
+                {
+                    Logger.CreateLogEntry(LogType.Error, $"MAL search was not successful for show: {title}", DateTime.Now);
                 }
             }
             catch (Exception ex)
@@ -60,6 +67,12 @@ namespace Phos.Managers
             string responseAsJson = JsonConvert.SerializeXmlNode(responseAsXml.GetElementsByTagName("entry")[0]);
             Entry malEntry = JsonConvert.DeserializeObject<Entry>(responseAsJson);
             MalShow malShow = malEntry.Show;
+
+            if(string.IsNullOrEmpty(malShow.Title))
+            {
+                Logger.CreateLogEntry(LogType.Error, "MAL Search was not successful.", DateTime.Now);
+                throw new Exception("MAL show was not found successfully.");
+            }
             
             Logger.CreateLogEntry(LogType.Success, $"MAL API search was successful for {title}. ID: {malShow.Id} | Total Episodes: {malShow.Episodes}", DateTime.Now);
 

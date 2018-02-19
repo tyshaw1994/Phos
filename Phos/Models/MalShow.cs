@@ -15,7 +15,7 @@ namespace Phos.Models
         public string EnglishTitle { get; set; }
 
         [JsonProperty("synonyms")]
-        public string[] Synonyms { get; set; }
+        public string Synonyms { get; set; }
 
         [JsonProperty("episodes")]
         public int Episodes { get; set; }
@@ -30,10 +30,10 @@ namespace Phos.Models
         public string Status { get; set; }
 
         [JsonProperty("start_date")]
-        public DateTime StartDate { get; set; }
+        public string StartDate { get; set; }
 
         [JsonProperty("end_date")]
-        public DateTime EndDate { get; set; }
+        public string EndDate { get; set; }
 
         [JsonProperty("synopsis")]
         public string Synopsis { get; set; }
