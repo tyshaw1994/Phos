@@ -13,6 +13,7 @@ using System.Text;
 using System.Linq;
 using System.IO;
 using Phos.Converters;
+using System.Diagnostics;
 
 namespace Phos.Managers
 {
@@ -23,10 +24,8 @@ namespace Phos.Managers
         private static readonly string MalAuthUrl = "https://myanimelist.net/api/account/verify_credentials.xml";
         private static readonly string MalListUrl = "https://myanimelist.net/malappinfo.php?u={0}&status=all&type=anime";
 
-        public static Anime SearchListForShow(string title)
+        public static Anime SearchListForShow(string username, string title)
         {
-            var username = ConfigurationManager.AppSettings["MalUserName"];
-
             var searchRequest = WebRequest.Create(string.Format(MalListUrl, username)) as HttpWebRequest;
             searchRequest.Method = "GET";
 
@@ -63,11 +62,8 @@ namespace Phos.Managers
             return currentShow;
         }
 
-        public static bool UpdateList(int malId, int episode, bool isFinished = false)
+        public static bool UpdateList(string username, string password, int malId, int episode, bool isFinished = false)
         {
-            string username = ConfigurationManager.AppSettings["MalUserName"];
-            string password = ConfigurationManager.AppSettings["MalPassword"];
-
             if(!ValidateMalCredentials(username, password))
             {
                 Logger.CreateLogEntry(LogType.Error, "Failed to verify MAL credentials.", DateTime.UtcNow);
@@ -118,6 +114,44 @@ namespace Phos.Managers
             return true;
         }
 
+        public static bool RegisterCredentials(RegisterValues values)
+        {
+            try
+            {
+                using (StreamWriter file = File.CreateText($"{ConfigurationManager.AppSettings["RootDirectory"]}creds.txt"))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    serializer.Serialize(file, values);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
+                return false;
+            }
+
+            return true;
+        }
+
+        public static RegisterValues GetRegisteredValues()
+        {
+            RegisterValues values = new RegisterValues();
+
+            try
+            {
+                using (StreamReader r = new StreamReader($"{ConfigurationManager.AppSettings["RootDirectory"]}creds.txt"))
+                {
+                    values = JsonConvert.DeserializeObject<RegisterValues>(r.ReadToEnd());
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
+            }
+
+            return values;
+        }
+
         private static bool ValidateMalCredentials(string username, string password)
         {
             HttpWebRequest searchRequest = WebRequest.Create($"{MalAuthUrl}") as HttpWebRequest;
@@ -135,7 +169,5 @@ namespace Phos.Managers
                 return false;
             }
         }
-
-       
     }
 }

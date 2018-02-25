@@ -131,6 +131,7 @@
     <Compile Include="Models\PlexServer.cs" />
     <Compile Include="Models\MalShow.cs" />
     <Compile Include="Models\PlexWriter.cs" />
+    <Compile Include="Models\RegisterValues.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
