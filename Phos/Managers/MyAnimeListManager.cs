@@ -47,9 +47,21 @@ namespace Phos.Managers
                                     where show.MyStatus == MalStatus.Watching
                                     select show;
 
-            var currentShow = (from show in currentlyWatching
-                              where TitleComparer.Compute(show.Title, title) < 5
-                              select show).First();
+            Anime currentShow;
+
+            try
+            {
+                currentShow = (from show in currentlyWatching
+                               where TitleComparer.Compute(show.Title, title) < 5
+                               select show).First();
+            }
+            catch
+            {
+                //Usually the title from Plex is the English title and not the default Japanese title. Check the Synonyms.
+                currentShow = (from show in currentlyWatching
+                               where TitleComparer.Compute(show.Synonyms, title) < 8
+                               select show).First();
+            }
 
             if(string.IsNullOrEmpty(currentShow.Title))
             {
