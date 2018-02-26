@@ -58,9 +58,17 @@ namespace Phos.Managers
             catch
             {
                 //Usually the title from Plex is the English title and not the default Japanese title. Check the Synonyms.
-                currentShow = (from show in currentlyWatching
-                               where TitleComparer.Compute(show.Synonyms, title) < 8
-                               select show).First();
+                try
+                {
+                    currentShow = (from show in currentlyWatching
+                                   where (TitleComparer.Compute(show.Synonyms, title) < 8) || show.Synonyms.ToLower().Replace("; ", ";").Split(';').Contains(title.ToLower())
+                                   select show).First();
+                }
+                catch (Exception ex)
+                {
+                    Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
+                    currentShow = null;
+                }
             }
 
             if(string.IsNullOrEmpty(currentShow.Title))
@@ -76,14 +84,12 @@ namespace Phos.Managers
 
         public static bool UpdateList(string username, string password, int malId, int episode, bool isFinished = false)
         {
-            if(!ValidateMalCredentials(username, password))
+            if (!ValidateMalCredentials(username, password))
             {
                 Logger.CreateLogEntry(LogType.Error, "Failed to verify MAL credentials.", DateTime.UtcNow);
                 return false;
-
             }
 
-            // try to add the show to the list if it isn't already added
             MalAnimeValues add = new MalAnimeValues
             {
                 Episode = episode,
@@ -92,35 +98,22 @@ namespace Phos.Managers
             string json = JsonConvert.SerializeObject(add);
             XmlDocument doc = JsonConvert.DeserializeXmlNode(json, "entry");
 
-            HttpWebRequest addRequest = WebRequest.Create($"{MalApiBaseUrl}/add/{malId}.xml?data={doc.OuterXml}") as HttpWebRequest;
-            addRequest.Method = "GET";
-            addRequest.Headers["Authorization"] = "Basic " +
+            HttpWebRequest updateRequest = WebRequest.Create($"{MalApiBaseUrl}/update/{malId}.xml?data={doc.OuterXml}") as HttpWebRequest;
+            updateRequest.Method = "GET";
+            updateRequest.Headers["Authorization"] = "Basic " +
                 Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-            addRequest.ContentType = "application/x-www-form-urlencoded";
+            updateRequest.ContentType = "application/x-www-form-urlencoded";
 
             try
             {
-                HttpWebResponse addResponse = (HttpWebResponse)addRequest.GetResponse();
+                HttpWebResponse updateResponse = (HttpWebResponse)updateRequest.GetResponse();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // MAL will return a BadRequest if you already have the item on your list, so try to update it before failing. 
-                HttpWebRequest updateRequest = WebRequest.Create($"{MalApiBaseUrl}/update/{malId}.xml?data={doc.OuterXml}") as HttpWebRequest;
-                updateRequest.Method = "GET";
-                updateRequest.Headers["Authorization"] = "Basic " +
-                    Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-                updateRequest.ContentType = "application/x-www-form-urlencoded";
-
-                try
-                {
-                    HttpWebResponse updateResponse = (HttpWebResponse)updateRequest.GetResponse();
-                }
-                catch (Exception ex)
-                {
-                    Logger.CreateLogEntry(LogType.Error, ex, createdOn: DateTime.Now);
-                    return false;
-                }
+                Logger.CreateLogEntry(LogType.Error, ex, createdOn: DateTime.Now);
+                return false;
             }
+        
 
             Logger.CreateLogEntry(LogType.Success, $"Successfully updated show on {username}'s list.", DateTime.Now);
             return true;
