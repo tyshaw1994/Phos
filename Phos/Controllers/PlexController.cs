@@ -43,7 +43,7 @@ namespace Phos.Controllers
             Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) from {plexRequest.Account.Title} for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
 
             RegisterValues values = MyAnimeListManager.GetRegisteredValues();
-            
+
             // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
             if (plexRequest.Event.Equals("media.scrobble"))
             {
@@ -102,7 +102,7 @@ namespace Phos.Controllers
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
 
-            if(!MyAnimeListManager.RegisterCredentials(values))
+            if (!MyAnimeListManager.RegisterCredentials(values))
             {
                 Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to register creds", DateTime.Now);
                 return new HttpResponseMessage(HttpStatusCode.InternalServerError);

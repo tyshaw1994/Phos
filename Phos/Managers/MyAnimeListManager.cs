@@ -26,6 +26,10 @@ namespace Phos.Managers
 
         public static Anime SearchListForShow(string username, string title)
         {
+            // Clean out any accented characters from the show title
+            var tempBytes = System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(title);
+            title = System.Text.Encoding.UTF8.GetString(tempBytes);
+
             var searchRequest = WebRequest.Create(string.Format(MalListUrl, username)) as HttpWebRequest;
             searchRequest.Method = "GET";
 
@@ -52,7 +56,7 @@ namespace Phos.Managers
             try
             {
                 currentShow = (from show in currentlyWatching
-                               where TitleComparer.Compute(show.Title, title) < 5
+                               where (TitleComparer.Compute(show.Title, title) < 5 || show.Title.ToLower().Contains(title.ToLower()))
                                select show).First();
             }
             catch
@@ -61,7 +65,7 @@ namespace Phos.Managers
                 try
                 {
                     currentShow = (from show in currentlyWatching
-                                   where (TitleComparer.Compute(show.Synonyms, title) < 8) || show.Synonyms.ToLower().Replace("; ", ";").Split(';').Contains(title.ToLower())
+                                   where (TitleComparer.Compute(show.Synonyms, title) < 5) || show.Synonyms.ToLower().Replace("; ", ";").Split(';').Contains(title.ToLower())
                                    select show).First();
                 }
                 catch (Exception ex)
