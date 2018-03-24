@@ -122,7 +122,7 @@ namespace Phos.Managers
                 return false;
             }
 
-            if(episode > show.Episodes)
+            if(episode > show.Episodes && show.Episodes > 0)
             {
                 Logger.CreateLogEntry(LogType.Error, $"Sub group had a bad naming scheme for episodes so I couldn't update the show: {show.Title}", DateTime.Now);
             }
