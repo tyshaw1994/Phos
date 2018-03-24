@@ -54,14 +54,13 @@ namespace Phos.Controllers
                     Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through MAL API search or some other error occured."), DateTime.Now);
                 }
 
-                var id = show.Id;
                 var episodeCompleted = plexRequest.Metadata.Index;
                 var isFinished = (episodeCompleted == show.Episodes) ? true : false;
 
                 // If I ever want to release this to the public, I will need some kind of lookup from a storage for MAL creds/emails, but for now I'll use my own
                 if (plexRequest.Account.Title == values.Email)
                 {
-                    var updated = MyAnimeListManager.UpdateList(values.UserName, values.Password, id, episodeCompleted, isFinished);
+                    var updated = MyAnimeListManager.UpdateList(values.UserName, values.Password, show, episodeCompleted, isFinished);
 
                     if (!updated)
                     {

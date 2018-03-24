@@ -51,7 +51,7 @@ namespace Phos.Managers
                                     where show.MyStatus == MalStatus.Watching
                                     select show;
 
-            Anime currentShow;
+            Anime currentShow = new Anime();
 
             try
             {
@@ -64,14 +64,42 @@ namespace Phos.Managers
                 //Usually the title from Plex is the English title and not the default Japanese title. Check the Synonyms.
                 try
                 {
-                    currentShow = (from show in currentlyWatching
-                                   where (TitleComparer.Compute(show.Synonyms, title) < 5) || show.Synonyms.ToLower().Replace("; ", ";").Split(';').Contains(title.ToLower())
-                                   select show).First();
+                    foreach(var show in currentlyWatching)
+                    {
+                        foreach(var altTitle in show.Synonyms.Replace("; ", ";").ToLower().Split(';'))
+                        {
+                            currentShow = (altTitle.Contains(title.ToLower())) ? show : null;
+                            if (currentShow != null)
+                                break;
+                        }
+
+                        if (currentShow != null)
+                            break;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
-                    currentShow = null;
+                    // Last resort, split the show by spaces and try to find a word
+                    try
+                    {
+                        foreach(var word in title.Split(' '))
+                        {
+                            var showByWord = (from show in currentlyWatching
+                                              where show.Title.Contains(word)
+                                              select show);
+
+                            if (word.Any())
+                            {
+                                currentShow = showByWord.First();
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
+                        currentShow = null;
+                    }
                 }
             }
 
@@ -86,11 +114,22 @@ namespace Phos.Managers
             return currentShow;
         }
 
-        public static bool UpdateList(string username, string password, int malId, int episode, bool isFinished = false)
+        public static bool UpdateList(string username, string password, Anime show, int episode, bool isFinished = false)
         {
             if (!ValidateMalCredentials(username, password))
             {
                 Logger.CreateLogEntry(LogType.Error, "Failed to verify MAL credentials.", DateTime.UtcNow);
+                return false;
+            }
+
+            if(episode > show.Episodes)
+            {
+                Logger.CreateLogEntry(LogType.Error, $"Sub group had a bad naming scheme for episodes so I couldn't update the show: {show.Title}", DateTime.Now);
+            }
+
+            if(show.MyWatchedEpisodes >= episode)
+            {
+                Logger.CreateLogEntry(LogType.Error, "Tried to update a show with an episode older than one already watched.", DateTime.Now);
                 return false;
             }
 
@@ -102,7 +141,7 @@ namespace Phos.Managers
             string json = JsonConvert.SerializeObject(add);
             XmlDocument doc = JsonConvert.DeserializeXmlNode(json, "entry");
 
-            HttpWebRequest updateRequest = WebRequest.Create($"{MalApiBaseUrl}/update/{malId}.xml?data={doc.OuterXml}") as HttpWebRequest;
+            HttpWebRequest updateRequest = WebRequest.Create($"{MalApiBaseUrl}/update/{show.Id}.xml?data={doc.OuterXml}") as HttpWebRequest;
             updateRequest.Method = "GET";
             updateRequest.Headers["Authorization"] = "Basic " +
                 Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
