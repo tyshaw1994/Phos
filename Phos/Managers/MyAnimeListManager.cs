@@ -62,22 +62,21 @@ namespace Phos.Managers
             catch
             {
                 //Usually the title from Plex is the English title and not the default Japanese title. Check the Synonyms.
-                try
+                
+                foreach(var show in currentlyWatching)
                 {
-                    foreach(var show in currentlyWatching)
+                    foreach(var altTitle in show.Synonyms.Replace("; ", ";").ToLower().Split(';'))
                     {
-                        foreach(var altTitle in show.Synonyms.Replace("; ", ";").ToLower().Split(';'))
-                        {
-                            currentShow = (altTitle.Contains(title.ToLower())) ? show : null;
-                            if (currentShow != null)
-                                break;
-                        }
-
+                        currentShow = (altTitle.Contains(title.ToLower())) ? show : null;
                         if (currentShow != null)
                             break;
                     }
+
+                    if (currentShow != null)
+                        break;
                 }
-                catch (Exception ex)
+
+                if(currentShow == null)
                 {
                     // Last resort, split the show by spaces and try to find a word
                     try
@@ -88,14 +87,14 @@ namespace Phos.Managers
                                               where show.Title.Contains(word)
                                               select show);
 
-                            if (word.Any())
+                            if (showByWord.Any())
                             {
                                 currentShow = showByWord.First();
                                 break;
                             }
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
                         currentShow = null;
@@ -114,7 +113,7 @@ namespace Phos.Managers
             return currentShow;
         }
 
-        public static bool UpdateList(string username, string password, Anime show, int episode, bool isFinished = false)
+        public static bool UpdateList(string username, string password, Anime show, bool isFinished = false)
         {
             if (!ValidateMalCredentials(username, password))
             {
@@ -122,23 +121,9 @@ namespace Phos.Managers
                 return false;
             }
 
-            if(episode > show.Episodes && show.Episodes > 0)
-            {
-                // god fucking damn it Horriblesubs stop keeping a running total of episodes across seasons for no good reason you fucking morons
-                episode = show.MyWatchedEpisodes + 1;
-
-                Logger.CreateLogEntry(LogType.Info, $"Sub group had a bad naming scheme for episodes so I couldn't update the show properly: {show.Title}", DateTime.Now);
-            }
-
-            if(show.MyWatchedEpisodes >= episode)
-            {
-                Logger.CreateLogEntry(LogType.Error, "Tried to update a show with an episode older than one already watched.", DateTime.Now);
-                return false;
-            }
-
             MalAnimeValues add = new MalAnimeValues
             {
-                Episode = episode,
+                Episode = show.MyWatchedEpisodes++,
                 Status = (isFinished) ? (int)Enumerations.MalStatus.Completed : (int)Enumerations.MalStatus.Watching
             };
             string json = JsonConvert.SerializeObject(add);

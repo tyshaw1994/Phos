@@ -60,7 +60,7 @@ namespace Phos.Controllers
                 // If I ever want to release this to the public, I will need some kind of lookup from a storage for MAL creds/emails, but for now I'll use my own
                 if (plexRequest.Account.Title == values.Email)
                 {
-                    var updated = MyAnimeListManager.UpdateList(values.UserName, values.Password, show, episodeCompleted, isFinished);
+                    var updated = MyAnimeListManager.UpdateList(values.UserName, values.Password, show, isFinished);
 
                     if (!updated)
                     {
