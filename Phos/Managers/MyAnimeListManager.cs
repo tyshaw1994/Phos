@@ -122,7 +122,7 @@ namespace Phos.Managers
                 return false;
             }
 
-            if(episode > show.Episodes)
+            if(episode > show.Episodes && show.Episodes > 0)
             {
                 // god fucking damn it Horriblesubs stop keeping a running total of episodes across seasons for no good reason you fucking morons
                 episode = show.MyWatchedEpisodes + 1;
