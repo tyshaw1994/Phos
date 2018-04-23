@@ -124,7 +124,10 @@ namespace Phos.Managers
 
             if(episode > show.Episodes)
             {
-                Logger.CreateLogEntry(LogType.Error, $"Sub group had a bad naming scheme for episodes so I couldn't update the show: {show.Title}", DateTime.Now);
+                // god fucking damn it Horriblesubs stop keeping a running total of episodes across seasons for no good reason you fucking morons
+                episode = show.MyWatchedEpisodes + 1;
+
+                Logger.CreateLogEntry(LogType.Info, $"Sub group had a bad naming scheme for episodes so I couldn't update the show properly: {show.Title}", DateTime.Now);
             }
 
             if(show.MyWatchedEpisodes >= episode)
