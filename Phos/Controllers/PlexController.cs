@@ -14,6 +14,8 @@ using Plex.Server.Webhooks.Converters;
 using Plex.Server.Webhooks.Events.Core;
 using Plex.Server.Webhooks.Events;
 using Plex.Server.Webhooks.Service;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
 
 namespace Phos.Controllers
 {
@@ -65,6 +67,14 @@ namespace Phos.Controllers
                     if (!updated)
                     {
                         Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to update list with show.", DateTime.Now);
+                    }
+                    else
+                    {
+                        TwilioClient.Init("ACb37004370a29383ed11dcf49a74924e2", "ec30b8521502b2c682482fe6045f73f7");
+                        MessageResource.Create(
+                            to: new Twilio.Types.PhoneNumber("+16037068203"),
+                            from: new Twilio.Types.PhoneNumber("+19789653287"),
+                            body: $"Successfully updated MAL with episode {episodeCompleted} of {show.Title}");
                     }
                 }
 
