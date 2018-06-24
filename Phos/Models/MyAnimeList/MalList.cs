@@ -12,7 +12,7 @@ namespace Phos.Models
         public MyInfo UserInfo { get; set; }
 
         [JsonProperty("anime")]
-        public Anime[] AllAnime { get; set; }
+        public MalAnime[] AllAnime { get; set; }
     }
 
     public class MyAnimeList

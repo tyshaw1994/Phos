@@ -14,6 +14,8 @@ using System.Linq;
 using System.IO;
 using Phos.Converters;
 using System.Diagnostics;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
 
 namespace Phos.Managers
 {
@@ -24,7 +26,7 @@ namespace Phos.Managers
         private static readonly string MalAuthUrl = "https://myanimelist.net/api/account/verify_credentials.xml";
         private static readonly string MalListUrl = "https://myanimelist.net/malappinfo.php?u={0}&status=all&type=anime";
 
-        public static Anime SearchListForShow(string username, string title)
+        public static MalAnime SearchListForShow(string username, string title)
         {
             // Clean out any accented characters from the show title
             var tempBytes = System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(title);
@@ -51,7 +53,7 @@ namespace Phos.Managers
                                     where show.MyStatus == MalStatus.Watching
                                     select show;
 
-            Anime currentShow = new Anime();
+            MalAnime currentShow = new MalAnime();
 
             try
             {
@@ -62,10 +64,10 @@ namespace Phos.Managers
             catch
             {
                 //Usually the title from Plex is the English title and not the default Japanese title. Check the Synonyms.
-                
-                foreach(var show in currentlyWatching)
+
+                foreach (var show in currentlyWatching)
                 {
-                    foreach(var altTitle in show.Synonyms.Replace("; ", ";").ToLower().Split(';'))
+                    foreach (var altTitle in show.Synonyms.Replace("; ", ";").ToLower().Split(';'))
                     {
                         currentShow = (altTitle.Contains(title.ToLower())) ? show : null;
                         if (currentShow != null)
@@ -76,12 +78,12 @@ namespace Phos.Managers
                         break;
                 }
 
-                if(currentShow == null)
+                if (currentShow == null)
                 {
                     // Last resort, split the show by spaces and try to find a word
                     try
                     {
-                        foreach(var word in title.Split(' '))
+                        foreach (var word in title.Split(' '))
                         {
                             var showByWord = (from show in currentlyWatching
                                               where show.Title.Contains(word)
@@ -102,20 +104,32 @@ namespace Phos.Managers
                 }
             }
 
-            if(string.IsNullOrEmpty(currentShow.Title))
+            if (string.IsNullOrEmpty(currentShow.Title))
             {
                 Logger.CreateLogEntry(LogType.Error, "MAL Search was not successful.", DateTime.Now);
                 throw new Exception("MAL show was not found successfully.");
             }
-            
+
             Logger.CreateLogEntry(LogType.Success, $"MAL API search was successful for {title}. ID: {currentShow.Id} | Total Episodes: {currentShow.Episodes}", DateTime.Now);
 
             return currentShow;
         }
 
-        public static bool UpdateList(string username, string password, Anime show, bool isFinished = false)
+        public static bool UpdateList(RegisterValues values, PlexRequest plexRequest)
         {
-            if (!ValidateMalCredentials(username, password))
+            if (!(plexRequest.Account.Title == values.Email)) return false;
+
+            MalAnime show = SearchListForShow(values.UserName, plexRequest.Metadata.GrandparentTitle);
+
+            if (!(show is MalAnime) || string.IsNullOrEmpty(show.Title))
+            {
+                Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through MAL API search or some other error occured."), DateTime.Now);
+            }
+
+            var episodeCompleted = plexRequest.Metadata.Index;
+            var isFinished = (episodeCompleted == show.Episodes) ? true : false;
+
+            if (!ValidateMalCredentials(values.UserName, values.Password))
             {
                 Logger.CreateLogEntry(LogType.Error, "Failed to verify MAL credentials.", DateTime.UtcNow);
                 return false;
@@ -132,9 +146,10 @@ namespace Phos.Managers
             HttpWebRequest updateRequest = WebRequest.Create($"{MalApiBaseUrl}/update/{show.Id}.xml?data={doc.OuterXml}") as HttpWebRequest;
             updateRequest.Method = "GET";
             updateRequest.Headers["Authorization"] = "Basic " +
-                Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+                Convert.ToBase64String(Encoding.ASCII.GetBytes($"{values.UserName}:{values.Password}"));
             updateRequest.ContentType = "application/x-www-form-urlencoded";
 
+            bool updated = false;
             try
             {
                 HttpWebResponse updateResponse = (HttpWebResponse)updateRequest.GetResponse();
@@ -142,12 +157,26 @@ namespace Phos.Managers
             catch (Exception ex)
             {
                 Logger.CreateLogEntry(LogType.Error, ex, createdOn: DateTime.Now);
-                return false;
+                updated = false;
             }
-        
 
-            Logger.CreateLogEntry(LogType.Success, $"Successfully updated show on {username}'s list.", DateTime.Now);
-            return true;
+            Logger.CreateLogEntry(LogType.Success, $"Successfully updated show on {values.UserName}'s list.", DateTime.Now);
+            updated = true;
+
+            if (!updated)
+            {
+                Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to update list with show.", DateTime.Now);
+                return updated;
+            }
+            else
+            {
+                TwilioClient.Init(values.TwilioUserName, values.TwilioPassword);
+                MessageResource.Create(
+                    to: new Twilio.Types.PhoneNumber(values.UserPhoneNumber),
+                    from: new Twilio.Types.PhoneNumber(values.TwilioPhoneNumber),
+                    body: $"Successfully updated MAL with episode {episodeCompleted} of {show.Title}");
+                return updated;
+            }
         }
 
         public static bool RegisterCredentials(RegisterValues values)
@@ -169,25 +198,6 @@ namespace Phos.Managers
             return true;
         }
 
-        public static RegisterValues GetRegisteredValues()
-        {
-            RegisterValues values = new RegisterValues();
-
-            try
-            {
-                using (StreamReader r = new StreamReader($"{ConfigurationManager.AppSettings["RootDirectory"]}creds.txt"))
-                {
-                    values = JsonConvert.DeserializeObject<RegisterValues>(r.ReadToEnd());
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.CreateLogEntry(LogType.Error, ex, DateTime.Now);
-            }
-
-            return values;
-        }
-
         private static bool ValidateMalCredentials(string username, string password)
         {
             HttpWebRequest searchRequest = WebRequest.Create($"{MalAuthUrl}") as HttpWebRequest;
@@ -196,14 +206,7 @@ namespace Phos.Managers
 
             HttpWebResponse searchResponse = (HttpWebResponse)searchRequest.GetResponse();
 
-            if (searchResponse.StatusCode == HttpStatusCode.OK)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return searchResponse.StatusCode == HttpStatusCode.OK;
         }
     }
 }

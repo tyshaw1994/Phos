@@ -16,18 +16,21 @@ using Plex.Server.Webhooks.Events;
 using Plex.Server.Webhooks.Service;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+using Phos.Models.AniList;
 
 namespace Phos.Controllers
 {
     public class PlexController : ApiController
     {
+        private RegisterValues values;
+
         [HttpPost]
         [Route("Plex/PostWebhook")]
-        public async Task<HttpResponseMessage> PostWebhook()
+        public async Task<PhosResponse> PostWebhook()
         {
             if (!ModelState.IsValid)
             {
-                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+                return new PhosResponse { MalResult = false, AniListResult = false };
             }
 
             var content = await this.Request.Content.ReadAsStringAsync();
@@ -39,54 +42,34 @@ namespace Phos.Controllers
             catch (JsonSerializationException jse)
             {
                 Logger.CreateLogEntry(Enumerations.LogType.Error, jse, DateTime.Now);
-                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+                return new PhosResponse { MalResult = false, AniListResult = false };
             }
 
             Logger.CreateLogEntry(Enumerations.LogType.Info, $"Incoming event ({plexRequest.Event}) from {plexRequest.Account.Title} for episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
 
-            RegisterValues values = MyAnimeListManager.GetRegisteredValues();
+            values = RegisterValues.GetRegisteredValues();
 
-            // TODO(Tyler): Figure out a way to utilize the other play events. Maybe Hue integration, email updates, some form of web ui, etc
+            bool malResult = false, aniListResult = false;
             if (plexRequest.Event.Equals("media.scrobble"))
             {
-                Anime show = MyAnimeListManager.SearchListForShow(values.UserName, plexRequest.Metadata.GrandparentTitle);
+                // MAL
+                malResult = MyAnimeListManager.UpdateList(values, plexRequest);
 
-                if (!(show is Anime) || string.IsNullOrEmpty(show.Title))
-                {
-                    Logger.CreateLogEntry(Enumerations.LogType.Error, new ArgumentException("Show was not found through MAL API search or some other error occured."), DateTime.Now);
-                }
+                // AniList
+                aniListResult = await AniListManager.UpdateListAsync(values, plexRequest);
 
-                var episodeCompleted = plexRequest.Metadata.Index;
-                var isFinished = (episodeCompleted == show.Episodes) ? true : false;
-
-                // If I ever want to release this to the public, I will need some kind of lookup from a storage for MAL creds/emails, but for now I'll use my own
-                if (plexRequest.Account.Title == values.Email)
-                {
-                    var updated = MyAnimeListManager.UpdateList(values.UserName, values.Password, show, isFinished);
-
-                    if (!updated)
-                    {
-                        Logger.CreateLogEntry(Enumerations.LogType.Error, "Failed to update list with show.", DateTime.Now);
-                    }
-                    else
-                    {
-                        TwilioClient.Init("ACb37004370a29383ed11dcf49a74924e2", "ec30b8521502b2c682482fe6045f73f7");
-                        MessageResource.Create(
-                            to: new Twilio.Types.PhoneNumber("+16037068203"),
-                            from: new Twilio.Types.PhoneNumber("+19789653287"),
-                            body: $"Successfully updated MAL with episode {episodeCompleted} of {show.Title}");
-                    }
-                }
-
-                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {episodeCompleted} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
+                Logger.CreateLogEntry(Enumerations.LogType.Scrobble, $"Finished watching episode {plexRequest.Metadata.Index} of {plexRequest.Metadata.GrandparentTitle}", DateTime.Now);
             }
 
-            HttpResponseMessage response = new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.Accepted
-            };
+            return new PhosResponse { MalResult = malResult, AniListResult = aniListResult };
+        }
 
-            return response;
+        [HttpGet]
+        [Route("GetAniList")]
+        public async Task<bool> GetAniListToken()
+        {
+            values = RegisterValues.GetRegisteredValues();
+            return await AniListManager.UpdateListAsync(values, new PlexRequest());
         }
 
         [HttpPost]

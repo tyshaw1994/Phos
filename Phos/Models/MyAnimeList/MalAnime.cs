@@ -5,7 +5,7 @@ using System;
 
 namespace Phos.Models
 {
-    public class Anime
+    public class MalAnime
     {
         [JsonProperty("series_animedb_id")]
         public int Id { get; set; }
